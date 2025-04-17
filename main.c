@@ -14,7 +14,8 @@
 
 typedef struct UserSysContents {
 	const char*	path;
-	char**		files;
+	char**		service_units;
+	char**		timer_units;
 	int		size;
 } UserSysContents;
 
