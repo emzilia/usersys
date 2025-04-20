@@ -114,23 +114,30 @@ UserSysContents get_units(UserSysContents* path) {
 		exit(EXIT_FAILURE);
 	}
 	int i = 0;
+	int j = 0;
 	while ((entry = readdir(dir)) != NULL) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
 		file_ext = strrchr(entry->d_name, '.');
-		if (file_ext != NULL)
+		if (file_ext != NULL) {
 			if (!strcmp(file_ext, ".service"))
 			    strcpy(path->service_units[i++], entry->d_name);
+			if (!strcmp(file_ext, ".timer"))
+			    strcpy(path->timer_units[j++], entry->d_name);
+		}
 	}
 	closedir(dir);
 
-	return count;
+	return *path;
 }
 
 void free_elements(UserSysContents* path) {
-	for (int i = 0; i < path->size; ++i)
+	for (int i = 0; i < path->service_size; ++i)
 		free(path->service_units[i]);
 	free(path->service_units);
+	for (int i = 0; i < path->timer_size; ++i)
+		free(path->timer_units[i]);
+	free(path->timer_units);
 }
 
 sd_bus_message* get_unit_status(sd_bus *bus, sd_bus_error error, sd_bus_message *reply, char *unit) {
