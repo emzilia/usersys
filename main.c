@@ -15,11 +15,18 @@
 #define PATH        "/org/freedesktop/systemd1"
 #define INTERFACE   "org.freedesktop.systemd1.Manager"
 
+typedef struct UserSysStatus {
+	char **         unit;
+	int             status;
+} UserSysStatus;
+
 typedef struct UserSysContents {
 	const char*	path;
 	char**		service_units;
 	char**		timer_units;
-	int		size;
+	int		service_size;
+	int             timer_size;
+	UserSysStatus*  statuses;
 } UserSysContents;
 
 static int log_error(int error, const char *message) {
@@ -67,13 +74,17 @@ int get_units(UserSysContents* path) {
 		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 	
 		file_ext = strrchr(entry->d_name, '.');
-		if (file_ext != NULL)
+		if (file_ext != NULL) {
 			if (!strcmp(file_ext, ".service"))
-				++count;
+				++service_count;
+			if (!strcmp(file_ext, ".timer"))
+				++timer_count;
+		}
+
 	}
 	closedir(dir);
 
-	init_usersyscontents(path, count);
+	init_usersyscontents(path, service_count, timer_count);
 	
 	dir = opendir(path->path);
 	if (dir == NULL) {
@@ -139,8 +150,12 @@ int main(int argc, char **argv) {
 
 	printf("Unit path is \"%s\".\n", ans);
 
-	for (int i = 0; i < usersys_contents.size; ++i) {
+	for (int i = 0; i < usersys_contents.service_size; ++i) {
 		printf("%s\n", usersys_contents.service_units[i]);
+	}
+	
+	for (int i = 0; i < usersys_contents.timer_size; ++i) {
+		printf("%s\n", usersys_contents.timer_units[i]);
 	}
 
 	free_elements(&usersys_contents);
