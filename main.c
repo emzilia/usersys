@@ -41,25 +41,47 @@ const char* get_usersys_path() {
 	return home;
 }
 
-void init_usersyscontents(UserSysContents* path, int count) {
-	path->size = count;
-	path->service_units = malloc((count + 1) * sizeof(char*));
+void init_usersyscontents(UserSysContents* path, int service_count, int timer_count) {
+	path->service_size = service_count;
+	path->service_units = malloc((service_count + 1) * sizeof(char*));
 	if (path->service_units == NULL) {
 		fprintf(stderr, "Error: Unable to allocate memory for struct\n");
 		exit(EXIT_FAILURE);
 	}
 
-	for (int i = 0; i < count; ++i) {
+	for (int i = 0; i < service_count; ++i) {
 		path->service_units[i] = malloc((64 + 1) * sizeof(char*));
 		if (path->service_units[i] == NULL) {
 			fprintf(stderr, "Error: Unable to allocate memory for struct members\n");
 			exit(EXIT_FAILURE);
 		}
 	}
+	path->timer_size = timer_count;
+	path->timer_units = malloc((timer_count + 1) * sizeof(char*));
+	if (path->timer_units == NULL) {
+		fprintf(stderr, "Error: Unable to allocate memory for struct\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (int i = 0; i < timer_count; ++i) {
+		path->timer_units[i] = malloc((64 + 1) * sizeof(char*));
+		if (path->timer_units[i] == NULL) {
+			fprintf(stderr, "Error: Unable to allocate memory for struct members\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 }
 
-int get_units(UserSysContents* path) {
+void init_usersysstatuses(UserSysContents* path) {
 	int count = 0;
+	count += path->service_size;
+	count += path->timer_size;
+	
+}
+
+UserSysContents get_units(UserSysContents* path) {
+	int service_count = 0;
+	int timer_count = 0;
 	struct dirent* entry;
 	char* file_ext;
 
@@ -137,7 +159,7 @@ int main(int argc, char **argv) {
 	int r;
 
 	usersys_contents.path = get_usersys_path();
-	usersys_contents.size = get_units(&usersys_contents);
+	usersys_contents = get_units(&usersys_contents);
 
 	r = sd_bus_open_user(&bus);
 	if (r < 0) return log_error(r, "Failed to acquire bus");
